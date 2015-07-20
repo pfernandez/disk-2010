@@ -1,0 +1,8 @@
+/home1/fernande/disk/equilibrium/models/JIN/fort.2
+2              : m
+0              : 1 turns off self gravity
+1.5,0,.75      : n, 0 to use data file and 100xq otherwise, rin
+2.0            : q
+2.0            : tstep power
+100000         : max steps
+0,2.11809463E+03            : 1 to restart,time; mv fort.51 fort.11

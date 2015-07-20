@@ -1,0 +1,17 @@
+#!/bin/bash
+# Starts runs either on compute nodes or local node depeding on input.
+
+jin=$1
+m=$2
+q=$3
+restart=$4
+onNodes=$5
+
+if [ "$onNodes" = "true" ]; then
+	for jin in $jin; do
+		job="cd $(pwd); ./runTorModels \"${jin}\" \"${m}\" \"${q}\" \"${restart}\" \"${onNodes}\""
+		echo $job | qsub -l nodes=1:ppn=2,walltime=168:00:00 -j oe -o output.txt
+	done
+else
+	./runTorModels "${jin}" "${m}" "${q}" "${restart}";
+fi

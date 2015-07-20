@@ -1,0 +1,4 @@
+1                                      :  0 = white dwarf   1 = polytrope
+0                                      :  0 = dead start    1 = jump start
+1.5 -1.0 512 512 512 -JIN 0.0 0.8 0.0  :  n n' jold kold jout kout log(rho) del starm
+# need neg kout for disk, neg n' for disk, n' = q for n' < 3

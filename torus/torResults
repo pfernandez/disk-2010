@@ -1,0 +1,264 @@
+#!/bin/bash
+#
+# Writes relevant data to .csv file which can be opened as a table in
+# Microsoft Excel or similar program. Copies important files,
+# generates and saves plots with Gnuplot, and saves it all to the
+# disk/Results folder.
+
+
+
+
+##### Write .csv file ######
+
+chmod +x writecsv
+echo "Writing .csv file..."
+./writecsv "$1" "$2" "$3"
+
+############################
+
+
+
+
+echo "Copying files and creating plots..."
+jmax=$4
+mkdir -p ../Results/plotits_m${2}q${3}
+for jin in $1
+
+do
+
+
+	################# Copy important files to disk/Results ######################
+		
+	cp models/j${jin}m${2}q${3}/torus.out ../Results/Results_j${jin}m${2}q${3}/torus.out_j${jin}m${2}q${3}.txt
+	cp models/j${jin}m${2}q${3}/fort.50 ../Results/Results_j${jin}m${2}q${3}/fort.50_j${jin}m${2}q${3}.txt
+	cp models/j${jin}m${2}q${3}/fort.51 ../Results/Results_j${jin}m${2}q${3}/fort.51_j${jin}m${2}q${3}.txt
+	
+	#############################################################################
+
+	
+	
+	
+	############ Average Rco/R0 values (should be done in Fortran.) #############
+	
+	R01="`grep -w Rco/R01: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+	R02="`grep -w Rco/R02: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+	R03="`grep -w Rco/R03: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+	r1="0"
+	r2="0"
+	r3="0"
+	n="0"
+	
+	if [ "$R01" != "NaN" ]
+	then
+		exp="`grep -w Rco/R01: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+		base="`grep -w Rco/R01: models/j${jin}m${2}q${3}/fort.50 | cut -c 19-24`"
+		r1="`echo "scale=5; ($base/1*1)*10^(0$exp)" | bc`"
+		n=$(($n + 1))
+	fi
+	
+	if [ "$R02" != "NaN" ]
+	then
+		exp="`grep -w Rco/R02: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+		base="`grep -w Rco/R02: models/j${jin}m${2}q${3}/fort.50 | cut -c 19-24`"
+		r2="`echo "scale=5; ($base/1*1)*10^(0$exp)" | bc`"   
+		n=$(($n + 1))
+	fi
+	
+	if [ "$R03" != "NaN" ]
+	then
+		exp="`grep -w Rco/R03: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+		base="`grep -w Rco/R03: models/j${jin}m${2}q${3}/fort.50 | cut -c 19-24`"
+		r3="`echo "scale=5; ($base/1*1)*10^(0$exp)" | bc`"
+		n=$(($n + 1))
+	fi
+	
+	RcR0avg="`echo "scale=2; ($r1 + $r2 + $r3)/$n" | bc`"
+	
+	#############################################################################
+	
+	
+	
+	
+	
+	######################## Add these to plots if restarting #########################
+	
+	if [ "$5" = "true" ]; then
+	
+		replotit="'models/j${jin}m${2}q${3}/fort.23a' using 1:2 with lines ti \"fort.23\",
+		'models/j${jin}m${2}q${3}/fort.23a' using 1:4 with lines notitle,
+		'models/j${jin}m${2}q${3}/fort.23a' using 1:6 with lines notitle, "
+	
+		replotit2="'models/j${jin}m${2}q${3}/fort.23a' using 1:3 with lines ti \"fort.23\",
+		'models/j${jin}m${2}q${3}/fort.23a' using 1:5 with lines notitle, "
+	fi
+	
+	####################################################################################
+	
+	
+	
+	
+	
+	################## Generate and save images with gnuplot. ###################
+	
+	rhomax="`grep -w rhomax ../equilibrium/models/j${jin}q${3}/polyout | cut -c 17-26`"
+	m="`grep -w n\ prime\ : ../equilibrium/models/j${jin}q${3}/polyout | cut -c 18`"
+	exp="`grep -w r-/r+: ../equilibrium/models/j${jin}q${3}/polyout | cut -c 24-26`"
+	base="`grep -w r-/r+: ../equilibrium/models/j${jin}q${3}/polyout | cut -c 17-22`"
+	r="`echo "scale=2; ($base/1*1)*10^(0$exp)" | bc`"
+	
+	
+	
+	#plotit
+	plotCommand="
+	reset\n
+	set terminal png\n
+	set output \"../Results/Results_j${jin}m${2}q${3}/plotitDensPert_j${jin}m${2}q${3}.png\"\n
+	set title \"m${2}/n1.5/q${3}/r-+${r}-j${jin}/M0.0/${jmax}\"\n
+	set logscale y\n
+	set autoscale\n
+	plot ${replotit}'models/j${jin}m${2}q${3}/fort.23' using 1:2 with lines ti \"fort.23\",\
+		 'models/j${jin}m${2}q${3}/fort.23' using 1:4 with lines notitle,\
+		 'models/j${jin}m${2}q${3}/fort.23' using 1:6 with lines notitle\n
+	"
+	echo -e $plotCommand | gnuplot
+	cp ../Results/Results_j${jin}m${2}q${3}/plotitDensPert_j${jin}m${2}q${3}.png ../Results/plotits_m${2}q${3}/
+	
+	
+	#plotit2
+	plotCommand="
+	reset\n
+	set terminal png\n
+	set output \"../Results/Results_j${jin}m${2}q${3}/plotit2PhaseDensPert_j${jin}m${2}q${3}.png\"\n
+	set title \"m${2}/n1.5/q${3}/r-+${r}-j${jin}/M0.0/${jmax}\"\n
+	set auto\n
+	plot ${replotit2}'models/j${jin}m${2}q${3}/fort.23' using 1:3 with lines ti \"fort.23\",\
+		 'models/j${jin}m${2}q${3}/fort.23' using 1:5 with lines notitle,\
+		 'models/j${jin}m${2}q${3}/fort.23' using 1:7 with lines notitle\n
+	"
+	echo -e $plotCommand | gnuplot
+	
+	
+	
+	#ee1
+	plotCommand="
+	reset\n
+	set terminal png\n
+	set output \"../Results/Results_j${jin}m${2}q${3}/ee1DensPertPot_j${jin}m${2}q${3}.png\"\n
+	set title \"m${2}/n1.5/q${3}/r-+${r}-j${jin}/M0.0/${jmax}\"\n
+	set logscale y\n
+	set auto\n
+	plot 'models/j${jin}m${2}q${3}/fort.52' using 1:2 with lines lt 3 ti \"drho\",\
+		 'models/j${jin}m${2}q${3}/fort.52' using 1:3 with lines lt 1 ti \"dW\"\n
+	"
+	echo -e $plotCommand | gnuplot
+	
+	
+	
+	#ee2m2
+	exp="`grep -w r+/r0: ../equilibrium/models/j${jin}q${3}/polyout | cut -c 24-26`"
+	base="`grep -w r+/r0: ../equilibrium/models/j${jin}q${3}/polyout | cut -c 17-22`"
+	rPlus="`echo "scale=2; ($base/1*1)*10^(0$exp)" | bc`"
+	
+	exp="`grep -w r-/ro: ../equilibrium/models/j${jin}q${3}/polyout | cut -c 24-26`"
+	base="`grep -w r-/ro: ../equilibrium/models/j${jin}q${3}/polyout | cut -c 17-22`"
+	rMinus="`echo "scale=2; ($base/1*1)*10^(0$exp)" | bc`"
+	
+	plotCommand="
+	reset\n
+	set terminal png\n
+	set output \"../Results/Results_j${jin}m${2}q${3}/ee2m2PhasePlot_j${jin}m${2}q${3}.png\"\n
+	set title \"m${2}/n1.5/q${3}/r-+${r}-j${jin}/M0.0/${jmax}\"\n
+	set polar\n
+	set angles degrees\n
+	set size square\n
+	set samples 160,160\n
+	set trange [0:360]\n
+	plot 'models/j${jin}m${2}q${3}/fort.63' with points lt 1 ti \"W phase\",\
+		 'models/j${jin}m${2}q${3}/fort.63' using 3:2 with points lt 1 notitle,\
+		 'models/j${jin}m${2}q${3}/fort.53' with points lt 3 ti \"drho phase\",\
+		 'models/j${jin}m${2}q${3}/fort.53' using 3:2 with points lt 3 notitle,\
+		 ${rPlus} lt 3 ti \"r+/ro = ${rPlus}\",\
+		 1.00 lt 4 ti \"ro/ro = 1.00\",\
+		 ${rMinus} lt 3 ti \"r-/ro =  ${rMinus}\",\
+		 ${RcR0avg} lt 5 ti \"rc/ro = ${RcR0avg}\"\n
+	"
+	echo -e $plotCommand | gnuplot
+	
+	
+	
+	#ee3
+	plotCommand="
+	reset\n
+	set terminal png\n
+	set output \"../Results/Results_j${jin}m${2}q${3}/ee3_j${jin}m${2}q${3}.png\"\n
+	set title \"m${2}/n1.5/q${3}/r-+${r}-j${jin}/M0.0/${jmax}\"\n
+	set auto\n
+	plot 'models/j${jin}m${2}q${3}/fort.66' using 1:2 with lines lt 3 ti 'torque'\n
+	"
+	echo -e $plotCommand | gnuplot
+	
+	
+	
+	#ee4
+	plotCommand="
+	reset\n
+	set terminal png\n
+	set output \"../Results/Results_j${jin}m${2}q${3}/ee4_j${jin}m${2}q${3}.png\"\n
+	set title \"m${2}/n1.5/q${3}/r-+${r}-j${jin}/M0.0/${jmax}\"\n
+	set auto\n
+	plot 'models/j${jin}m${2}q${3}/fort.27' using 1:3 with points lt 3 ti 'Ek',\
+		 'models/j${jin}m${2}q${3}/fort.27' using 1:2 with points lt 6 ti 'Eh'\n
+	"
+	echo -e $plotCommand | gnuplot
+	
+	
+	
+	#ee5
+	plotCommand="
+	reset\n
+	set terminal png\n
+	set output \"../Results/Results_j${jin}m${2}q${3}/ee5_j${jin}m${2}q${3}.png\"\n
+	set title \"m${2}/n1.5/q${3}/r-+${r}-j${jin}/M0.0/${jmax}\"\n
+	set auto\n
+	plot 'models/j${jin}m${2}q${3}/fort.28' using 1:2 with points lt 0 ti 'R stress',\
+		 'models/j${jin}m${2}q${3}/fort.28' using 1:3 with points lt 1 ti 'G work',\
+		 'models/j${jin}m${2}q${3}/fort.28' using 1:4 with points lt 3 ti 'Acoustic flux'\n
+	"
+	echo -e $plotCommand | gnuplot
+	
+	
+	
+	#ee6
+	plotCommand="
+	reset\n
+	set terminal png\n
+	set output \"../Results/Results_j${jin}m${2}q${3}/ee6_j${jin}m${2}q${3}.png\"\n
+	set title \"m${2}/n1.5/q${3}/r-+${r}-j${jin}/M0.0/${jmax}\"\n
+	set auto\n
+	plot 'models/j${jin}m${2}q${3}/fort.29' using 1:2 with lines ti 'dj'\n
+	"
+	echo -e $plotCommand | gnuplot
+	
+	
+	
+	#ee8
+	plotCommand="
+	reset\n
+	set terminal png\n
+	set output \"../Results/Results_j${jin}m${2}q${3}/ee8_j${jin}m${2}q${3}.png\"\n
+	set title \"m${2}/n1.5/q${3}/r-+${r}-j${jin}/M0.0/${jmax}\"\n
+	set auto\n
+	plot 'models/j${jin}m${2}q${3}/fort.76' using 1:2 with points lt 0 ti 'R stress/E',\
+		 'models/j${jin}m${2}q${3}/fort.76' using 1:3 with points lt 1 ti 'G work/E',\
+		 'models/j${jin}m${2}q${3}/fort.76' using 1:4 with points lt 3 ti 'Acoustic flux/E'\n
+	"
+	echo -e $plotCommand | gnuplot
+
+	#############################################################################
+
+
+
+
+done
+
+echo "quit" | gnuplot

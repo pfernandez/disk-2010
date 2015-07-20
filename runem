@@ -1,0 +1,80 @@
+#!/bin/bash
+#
+# Compiles hscf.f and torus.f, runs and gets results for equilibrium models,
+# and begins torus models for given jin values.
+#
+#  *If you wish to set additional parameters beside those below, first change
+#   values in equilibrium/runEqModels and/or torus/runTorModels. These values
+#   will be carried into all of the simulations.
+#
+#  *To perform particular operations, uncomment the relevant commands below.
+#
+#  *To restart a completed run, uncomment restart="true".
+#
+#  *To run on the HPC compute nodes, uncomment onNode="true". You can check
+#   your status by typing 'qstat' or visiting http://hpc.uoregon.edu/ganglia/.
+#   To kill a run, use the command 'qdel [Job #]', e.g. 'qdel 351'.
+
+
+
+
+###################### Assign values here: ########################
+
+
+jin="102 111" #  118  129  154  173  205  223  243  293  334"
+m="2"
+q="1.0"
+jmax="512"
+#restart="true"
+onNodes="true"
+
+
+###################################################################
+
+
+
+
+#--- Make files executable:
+
+#echo "Making files executable..."; chmod +x equilibrium/comit equilibrium/runEqModels equilibrium/eqResults torus/comit torus/runTorModels torus/torResults torus/torus_job
+
+
+
+
+
+#--- Compile hscf.f & torus.f:
+
+#echo "Compiling hscf.f..."; cd equilibrium; ./comit; cd ..
+#echo "Compiling torus.f..."; cd torus; ./comit; cd ..
+
+
+
+
+
+#--- Run equilibrium models:
+
+#echo "Running equilibrium models..."; cd equilibrium; ./runEqModels "${jin}" "${q}" "${jmax}"; cd ..
+
+
+
+
+
+#--- Get equilibrium results and send to Results folder:
+
+#echo "Getting equilibrium results..."; cd equilibrium; ./eqResults "${jin}" "${m}" "${q}" "${jmax}"; cd ..
+
+
+
+
+
+#--- Run torus models:
+
+#echo "Running torus models..."; cd torus; ./torus_job "${jin}" "${m}" "${q}" "${restart}" "${onNodes}"; cd ..
+
+
+
+
+
+#--- Get torus results (do not uncomment this and "Run torus models" simultaneously):
+
+#echo "Getting torus results..."; cd torus; ./torResults "${jin}" "${m}" "${q}" "${jmax}" "${restart}"; cd ..

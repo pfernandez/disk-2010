@@ -1,0 +1,1 @@
+gfortran -fdefault-real-8 -o a.out torus.f

@@ -1,0 +1,20 @@
+for jin in $1
+
+do
+
+
+mkdir -p models/j${jin}q$2
+cd models/j${jin}q$2
+
+
+##### Run equilibrium model #####
+echo "1                                      :  0 = white dwarf   1 = polytrope
+0                                      :  0 = dead start    1 = jump start
+1.5 -${2} ${3} ${3} ${3} -${jin} 0.0 0.8 0.0  :  n n' jold kold jout kout log(rho) del starm
+" > temp_hscf.in
+
+../.././hscf < temp_hscf.in
+cd ../../
+
+
+done

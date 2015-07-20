@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# Runs torus models using arguments from disk/runem.
+
+for jin in $1; do
+
+mkdir -p models/j${jin}m${2}q$3
+cd models/j${jin}m${2}q$3
+rerun=0
+Time=0
+
+	# set variables if restarting
+if [ "$4" = "true" ]; then
+	rerun=1
+	numlines=$(cat fort.22 | wc -l)
+	ourline=$(( $numlines - $numlines % 100 ))
+	Time=$(sed -n ${ourline}p fort.22 | cut -c 1-15)
+	mv fort.51 fort.11; cp fort.23 fort.23a
+	echo "Restarting jin = ${jin} from iteration ${ourline}..."
+fi
+
+	# create pseudo torus.in file
+echo "../../../equilibrium/models/j${jin}q${3}/fort.2
+${2}              : m
+0              : 1 turns off self gravity
+1.5,0,.75      : n, 0 to use data file and 100xq otherwise, rin
+${3}            : q
+2.0            : tstep power
+100000         : max steps
+${rerun},${Time}            : 1 to restart,time; mv fort.51 fort.11
+" > temp_torus.in
+
+	# send to Fortran
+if [ "$5" = "true" ]; then
+	../.././a.out < temp_torus.in > torus.out 		# Foreground if on separate node,
+else
+	../.././a.out < temp_torus.in > torus.out &		# background if not.
+fi
+
+cd ../../
+
+done

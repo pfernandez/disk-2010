@@ -1,0 +1,27 @@
+# Explores decreasing values of jin to find a desired T/|W|.
+
+jin=111 # Set to lowest known value of jin.
+q="1.0"
+TW=0
+chmod +x runit
+
+while [ "$TW" != ".161" ] # Replace number with desired T/|W| using a decimal followed by 3 digits.
+
+do
+	jin=$((jin-1))
+	
+	echo "Running equilibrium models..."
+	./runit "${jin}"
+
+
+	########### Get T/|W| ##########
+
+	exp="`grep -w t/\|w\| models/j${jin}q${q}/polyout | cut -c 36-38`"
+	base="`grep -w t/\|w\| models/j${jin}q${q}/polyout | cut -c 29-34`"
+	TW="`echo "scale=3; ($base/1*1)*10^(0$exp)" | bc`"
+	
+	
+	echo "T/W is now $TW"
+	echo "jin is now $jin"
+	
+done

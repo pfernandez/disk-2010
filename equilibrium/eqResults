@@ -1,0 +1,57 @@
+#!/bin/bash
+
+
+for jin in $1
+
+
+do
+
+
+
+	########## Create required directories ##########
+
+	mkdir -p ../Results/Results_j${jin}m${2}q${3}
+
+
+
+
+	############# Copy files #################
+		
+	cp models/j${jin}q${3}/polyout ../Results/Results_j${jin}m${2}q${3}/polyout_j${jin}q${3}.txt
+	cp models/j${jin}q${3}/fact ../Results/Results_j${jin}m${2}q${3}/fact_j${jin}q${3}.txt
+
+
+
+
+	##### Generate and save contour plot #####
+	
+	rhomax="`grep -w rhomax models/j${jin}q${3}/polyout | cut -c 17-26`"
+	m="`grep -w n\ prime\ : models/j${jin}q${3}/polyout | cut -c 18`"
+	exp="`grep -w r-/r+: models/j${jin}q${3}/polyout | cut -c 24-26`"
+	base="`grep -w r-/r+: models/j${jin}q${3}/polyout | cut -c 17-22`"
+	r="`echo "scale=2; ($base/1*1)*10^(0$exp)" | bc`"
+	mid=$(echo $rhomax|sed 's/-.*/-'$((${rhomax: -1}+1))'/g')
+	
+	contour="
+	reset\n
+	set terminal gif\n
+	set output \"../Results/Results_j${jin}m${2}q${3}/eqContour_j${jin}q${3}.png\"\n
+	set title \"m${m}/n1.5/q${3}/r-+${r}-j${jin}/M0.0/${4}\"\n
+	set contour\n
+	set cntrparam levels incremental 1.0e-30,${mid},${rhomax}\n
+	set size square\n
+	set grid\n
+	set mxtics\n
+	set mytics\n
+	set nosurface\n
+	set view 0,0\n
+	set data style lines\n
+	set nokey\n
+	splot 'models/j${jin}q${3}/fort.47' ti \"fort.47\"\n
+	"
+	echo -e $contour | gnuplot
+
+
+done
+
+echo "quit" | gnuplot

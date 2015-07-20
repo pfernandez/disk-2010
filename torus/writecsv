@@ -1,0 +1,94 @@
+#!/bin/bash
+
+
+######### Generate column headers ###########
+
+echo -e "T/|W|,R-/R+,jin,Y1,Y2,Rc/R0,jmax" >> ../Results/table_m${2}q${3}.csv
+
+
+
+for jin in $1
+
+do
+
+
+	########### Get T/|W| ##########
+
+	exp="`grep -w t/\|w\| ../equilibrium/models/j${jin}q${3}/polyout | cut -c 36-38`"
+	base="`grep -w t/\|w\| ../equilibrium/models/j${jin}q${3}/polyout | cut -c 29-34`"
+	TW="`echo "scale=4; ($base/1*1)*10^(0$exp)" | bc`"
+
+
+
+	########## Get R-/R+ ##########
+	exp="`grep -w r-/r+: ../equilibrium/models/j${jin}q${3}/polyout | cut -c 24-26`"
+	base="`grep -w r-/r+: ../equilibrium/models/j${jin}q${3}/polyout | cut -c 17-22`"
+	rInOut="`echo "scale=4; ($base/1*1)*10^(0$exp)" | bc`"
+
+
+
+	########## Get Y1 ##########
+	
+	exp="`grep -w y1\ avg: models/j${jin}m${2}q${3}/fort.50 | cut -c 24-26`"
+	base="`grep -w y1\ avg: models/j${jin}m${2}q${3}/fort.50 | cut -c 16-22`"
+	Y1="`echo "scale=4; ($base/1*1)*10^(0$exp)" | bc`"
+	
+	
+	
+	########## Get Y2  ############
+	exp="`grep -w y2\ avg: models/j${jin}m${2}q${3}/fort.50 | cut -c 24-26`"
+	base="`grep -w y2\ avg: models/j${jin}m${2}q${3}/fort.50 | cut -c 16-22`"
+	Y2="`echo "scale=4; ($base/1*1)*10^(0$exp)" | bc`"	
+
+	
+	
+	########## Get & average Rco/R0 values ##########
+	
+	R01="`grep -w Rco/R01: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+	R02="`grep -w Rco/R02: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+	R03="`grep -w Rco/R03: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+	r1="0"
+	r2="0"
+	r3="0"
+	n="0"
+	
+	if [ "$R01" != "NaN" ]
+	then
+		exp="`grep -w Rco/R01: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+		base="`grep -w Rco/R01: models/j${jin}m${2}q${3}/fort.50 | cut -c 19-24`"
+		r1="`echo "scale=5; ($base/1*1)*10^(0$exp)" | bc`"
+		n=$(($n + 1))
+	fi
+	
+	if [ "$R02" != "NaN" ]
+	then
+		exp="`grep -w Rco/R02: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+		base="`grep -w Rco/R02: models/j${jin}m${2}q${3}/fort.50 | cut -c 19-24`"
+		r2="`echo "scale=5; ($base/1*1)*10^(0$exp)" | bc`"   
+		n=$(($n + 1))
+	fi
+	
+	if [ "$R03" != "NaN" ]
+	then
+		exp="`grep -w Rco/R03: models/j${jin}m${2}q${3}/fort.50 | cut -c 26-28`"
+		base="`grep -w Rco/R03: models/j${jin}m${2}q${3}/fort.50 | cut -c 19-24`"
+		r3="`echo "scale=5; ($base/1*1)*10^(0$exp)" | bc`"
+		n=$(($n + 1))
+	fi
+	
+	RcR0="`echo "scale=4; ($r1 + $r2 + $r3)/$n" | bc`"
+
+
+
+	########## Get jmax ###########
+	
+	jmax="`grep -w jmax ../equilibrium/models/j${jin}q${3}/fact | cut -c 23-25`"
+
+
+
+	########## Write data to csv file ##########
+	
+	echo -e "${TW},${rInOut},${jin},${Y1},${Y2},${RcR0},${jmax}" >> ../Results/table_m${2}q${3}.csv
+
+
+done
